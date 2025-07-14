@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The AdTech Quiz</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        #quiz-container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        #question {
+            margin-bottom: 20px;
+            font-size: 18px;
+            color: #333;
+        }
+        .option {
+            display: block;
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .option:hover {
+            background-color: #e0e0e0;
+        }
+        .option input {
+            margin-right: 10px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 10px;
+            text-align: left;
+            font-size: 16px;
+        }
+        .result-item {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .correct {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+        }
+        .incorrect {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div id="quiz-container">
+        <h1>The AdTech Quiz</h1>
+        <div id="question"></div>
+        <form id="quiz-form">
+            <div id="options"></div>
+            <button type="button" id="next-btn">Next</button>
+            <button type="submit" id="submit-btn" style="display: none;">Submit</button>
+        </form>
+        <div id="result" style="display: none;"></div>
+    </div>
+    <script>
+        let questions = [];
+        let currentQuestion = 0;
+        let answers = {};
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadQuestions();
+        });
+
+        function loadQuestions() {
+            fetch('/api/quiz/questions')
+                .then(response => response.json())
+                .then(data => {
+                    questions = data;
+                    displayQuestion();
+                });
+        }
+
+        function displayQuestion() {
+            if (currentQuestion >= questions.length) {
+                document.getElementById('next-btn').style.display = 'none';
+                document.getElementById('submit-btn').style.display = 'inline-block';
+                return;
+            }
+
+            const question = questions[currentQuestion];
+            document.getElementById('question').textContent = question.title;
+            const optionsDiv = document.getElementById('options');
+            optionsDiv.innerHTML = `
+                <label class="option"><input type="radio" name="answer" value="1"> ${question.optionA}</label>
+                <label class="option"><input type="radio" name="answer" value="2"> ${question.optionB}</label>
+                <label class="option"><input type="radio" name="answer" value="3"> ${question.optionC}</label>
+            `;
+        }
+
+        document.getElementById('next-btn').addEventListener('click', () => {
+            const selected = document.querySelector('input[name="answer"]:checked');
+            if (selected) {
+                answers[questions[currentQuestion].quesId] = parseInt(selected.value);
+                currentQuestion++;
+                displayQuestion();
+            } else {
+                alert('Please select an option!');
+            }
+        });
+
+        document.getElementById('quiz-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            fetch('/api/quiz/submit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(answers)
+            })
+            .then(response => response.json())
+            .then(data => {
+                const resultDiv = document.getElementById('result');
+                let resultHTML = `<h3>Your Score: ${data.score}/${data.totalQuestions}</h3>`;
+                
+                data.results.forEach(result => {
+                    const chosenOption = result.chosenAnswer === 1 ? result.optionA :
+                                        result.chosenAnswer === 2 ? result.optionB : result.optionC;
+                    const correctOption = result.correctAnswer === 1 ? result.optionA :
+                                        result.correctAnswer === 2 ? result.optionB : result.optionC;
+                    resultHTML += `
+                        <div class="result-item ${result.isCorrect ? 'correct' : 'incorrect'}">
+                            <p><strong>Question:</strong> ${result.title}</p>
+                            <p><strong>Your Answer:</strong> ${chosenOption}</p>
+                            ${!result.isCorrect ? `<p><strong>Correct Answer:</strong> ${correctOption}</p>` : ''}
+                        </div>
+                    `;
+                });
+
+                resultDiv.innerHTML = resultHTML;
+                resultDiv.style.display = 'block';
+                document.getElementById('quiz-form').style.display = 'none';
+                document.getElementById('question').style.display = 'none'; 
+                document.getElementById('options').style.display = 'none';
+            });
+        });
+    </script>
+</body>
+</html>
