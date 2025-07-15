@@ -1,4 +1,4 @@
-# Java Quiz Application
+# AdTech Quiz Application
 
 A simple web-based quiz application built with **Spring Boot**, **MySQL**, and a single HTML file for the frontend. The app presents 10 Java-related multiple-choice questions, allows users to answer them sequentially using a "Next" button, and displays the score with correct and incorrect answers upon submission.
 
@@ -80,7 +80,7 @@ quizapp/
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/PraveenKumar-A02/Quiz_SpringBoot.git
+git clone https://github.com/PraveenKumar-A02/AdTech_Quiz.git
 cd quizapp
 ```
 
